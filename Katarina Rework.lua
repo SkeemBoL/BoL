@@ -17,8 +17,11 @@ class 'Katarina'
 		self.Q = {throwing = false, last = 0}
 		self.targetsWithQ = {}
 
+		--|> Tracks E for Humanizer
+		self.E = {last = 0, delay = 0, canuse = true}
+
 		--|> Tracks When Using R
-		self.R = {using    = false, last = 0}
+		self.R = {using  = false, last = 0}
 
 		--|> Tracks Ward Jumpings
 		self.lastJump = 0
@@ -28,6 +31,12 @@ class 'Katarina'
 
 		--|> Ignite Slot
 		self.ignite = myHero:GetSpellData(SUMMONER_1).name:find("summonerdot") and SUMMONER_1 or myHero:GetSpellData(SUMMONER_2).name:find("summonerdot") and SUMMONER_2 or nil
+
+		--|> SAC & MMA Combability
+		self.comp = false
+
+		--|> Target tracking
+		self.target = nil
 
 		--|> EnemyText Table
 		self.enemyText = {}
@@ -52,6 +61,7 @@ class 'Katarina'
 		--|> Callback Binds
 		AddTickCallback(function() self:Tick() end)
 		AddDrawCallback(function() self:Draw() end)
+		--AddWndmsgCallback(function (msg, key) self:WndMsg(msg, key)	end)
 		AddProcessSpellCallback(function(unit, spell) self:Spells(unit, spell)	end)
 		if VIP_USER then
 			AddSendPacketCallback(function(packet) self:SendPacket(packet) end)
@@ -62,8 +72,9 @@ class 'Katarina'
 		AddDeleteObjCallback(function(obj) self:ObjDelete(obj) end)
 
 		--|> Prints Loaded
-		print("<font color=\"#FF0000\">[Nintendo Katarina]:</font> <font color=\"#FFFFFF\">Loaded Version 3.01</font>")
+		print("<font color=\"#FF0000\">[Nintendo Katarina]:</font> <font color=\"#FFFFFF\">Loaded Version 3.02</font>")
 	end
+
 
 	function Katarina:Menu()
 		---|> Initiates scriptConfig instance
@@ -83,10 +94,15 @@ class 'Katarina'
 					self.menu.skills.W:addParam('clearW',  'Use in Clear ', SCRIPT_PARAM_ONOFF, true)
 					self.menu.skills.W:addParam('drawW',   'Draw Range ',   SCRIPT_PARAM_ONOFF, true)
 				self.menu.skills:addSubMenu('E - ['..self.spells.E.name..']', 'E')
-					self.menu.skills.E:addParam('comboE',  'Use in Combo',  SCRIPT_PARAM_ONOFF, true)
-					self.menu.skills.E:addParam('harassE', 'Use in Harass', SCRIPT_PARAM_ONOFF, false)
-					self.menu.skills.E:addParam('clearE',  'Use in Clear ', SCRIPT_PARAM_ONOFF, true)
-					self.menu.skills.E:addParam('drawE',   'Draw Range ',   SCRIPT_PARAM_ONOFF, true)			
+					self.menu.skills.E:addParam('comboE',    'Use in Combo',  SCRIPT_PARAM_ONOFF, true)
+					self.menu.skills.E:addParam('harassE',   'Use in Harass', SCRIPT_PARAM_ONOFF, false)
+					self.menu.skills.E:addParam('clearE',    'Use in Clear ', SCRIPT_PARAM_ONOFF, true)
+					self.menu.skills.E:addParam('drawE',     'Draw Range ',   SCRIPT_PARAM_ONOFF, true)			
+					self.menu.skills.E:addParam('humanizer', 'Use Humanizer', SCRIPT_PARAM_ONOFF, false)
+					self.menu.skills.E:addParam('maxdelay',  'Max Delay',     SCRIPT_PARAM_SLICE, 1.5, 0, 3, 1)
+				self.menu.skills:addSubMenu('R - ['..self.spells.R.name..']', 'R')
+					self.menu.skills.R:addParam('stopclick',  'Stop R With Right Click',      SCRIPT_PARAM_ONOFF, true)
+					self.menu.skills.R:addParam('stopkill',   'Stop R if I Can Kill Target',  SCRIPT_PARAM_ONOFF, true)
 			
 			--|> Combo Settings Menu
 			self.menu:addSubMenu('-~=[Combo Settings]=~-', 'combo')
@@ -140,18 +156,18 @@ class 'Katarina'
 	end
 
 	function Katarina:Tick()
-		local target = self:GetTarget()
-		if target  and not self.using then
+		self.target = self:GetTarget()
+		if self.target  and not self.using then
 			if self.menu.comboKey then
-				self:Combo(target)
+				self:Combo(self.target)
 			elseif self.menu.harassKey then
-				self:Harass(target)
+				self:Harass(self.target)
 			end
 			if self.menu.skills.Q.autoQ then
-				self.spells.Q:Cast(target)
+				self.spells.Q:Cast(self.target)
 			end
 			if self.menu.skills.W.autoW then
-				self.spells.W:Cast(target)
+				self.spells.W:Cast(self.target)
 			end
 		end
 		if self.menu.clearKey then
@@ -177,6 +193,35 @@ class 'Katarina'
 				self.Q.throwing = false
 			end
 		end
+		if not self.E.canuse then
+			if (os.clock() - self.E.last) > self.E.delay then
+				self.E.canuse = true
+			end
+		end
+		if not self.comp then
+			if _G.AutoCarry then
+				print("<font color=\"#FF0000\">[Nintendo Katarina]:</font> <font color=\"#FFFFFF\">Found SAC Disabling SxOrb</font>")
+				if self.menu.orbwalk.General.Enabled and self.menu.orbwalk.General.Enabled == true then
+			 		self.menu.orbwalk.General.Enabled = true
+			 	end
+				self.comp = true
+			 elseif _G.MMA_Loaded then
+			 	print("<font color=\"#FF0000\">[Nintendo Katarina]:</font> <font color=\"#FFFFFF\">Found MMA Disabling SxOrb</font>")
+			 	if self.menu.orbwalk.General.Enabled and self.menu.orbwalk.General.Enabled == true then
+			 		self.menu.orbwalk.General.Enabled = true
+			 	end
+			 	self.comp = true
+			 end
+		end
+	end
+
+	function Katarina:random(min, max, precision)
+   		local precision = precision or 0
+   		local num = math.random()
+   		local range = math.abs(max - min)
+   		local offset = range * num
+   		local randomnum = min + offset
+   		return math.floor(randomnum * math.pow(10, precision) + 0.5) / math.pow(10, precision)
 	end
 
 	function Katarina:Draw()
@@ -346,7 +391,7 @@ class 'Katarina'
 			 	if enemy.health <= (self.spells.Q:Damage(enemy) + ExtraDmg) then
 					local WardPos = myHero + (Vector(enemy) - myHero):normalized()*590
 					if WardPos then
-						self:WardJump(WardPos.x, WardPos.z)
+						self:WardJump(WardPos.x, WardPos.z, enemy)
 						self.spells.Q:Cast(enemy)
 					end
 				end
@@ -360,6 +405,39 @@ class 'Katarina'
 		local apscaling = p.apscaling or 0
 		local totaldmg  = spellDmg + (apscaling * myHero.ap)
 		return unit and myHero:CalcMagicDamage(unit, totaldmg)
+	end
+
+	function Katarina:MaxDmg(unit)
+		local DmgTable = { Q = self.spells.Q:Ready() and self.spells.Q:Damage(unit) or 0, W = self.spells.W:Ready() and self.spells.W:Damage(unit) or 0, E = self.spells.E:Ready() and self.spells.E:Damage(unit) or 0}
+		local ExtraDmg = 0
+		if self.targetsWithQ[unit.networkID] ~= nil then
+			ExtraDmg = ExtraDmg + self:QBuffDmg(unit)
+		end
+		if self.ignite ~= nil and myHero:CanUseSpell(self.ignite) == READY then
+			ExtraDmg = ExtraDmg + getDmg('IGNITE', enemy, myHero)
+		end
+		return DmgTable.Q + DmgTable.W + DmgTable.E + ExtraDmg
+	end
+
+	function Katarina:OtherMovements(bool)
+		if _G.AutoCarry then
+			if _G.AutoCarry.MainMenu ~= nil then
+				if _G.AutoCarry.CanAttack ~= nil then
+					_G.AutoCarry.CanAttack = bool
+					_G.AutoCarry.CanMove = bool
+				end
+			elseif _G.AutoCarry.Keys ~= nil then
+					if _G.AutoCarry.MyHero ~= nil then
+					_G.AutoCarry.MyHero:MovementEnabled(bool)
+					_G.AutoCarry.MyHero:AttacksEnabled(bool)
+				end
+			end
+		elseif _G.MMA_Loaded then
+			_G.MMA_Orbwalker	= bool
+			_G.MMA_HybridMode	= bool
+			_G.MMA_LaneClear	= bool
+			_G.MMA_LastHit		= bool
+		end
 	end
 
 	function Katarina:DrawCircle(x, y, z, radius, color)
@@ -404,8 +482,8 @@ class 'Katarina'
 		end
 	end
 
-	function Katarina:WardJump(x, y)
-		if GetDistance(mousePos) then
+	function Katarina:WardJump(x, y, enemy)
+		if GetDistance(mousePos) and not enemy then
 			local moveToPos = myHero + (Vector(mousePos) - myHero):normalized()*300
 			myHero:MoveTo(moveToPos.x, moveToPos.z)
 		end	
@@ -481,8 +559,22 @@ class 'Katarina'
 		end
 	end
 
+	function Katarina:WndMsg(msg, key)
+		if self.menu.skills.R.stopclick then
+			if msg == WM_RBUTTONDOWN and self.R.using then 
+				self.R.using = false
+			end
+		end
+	end
+
 	function Katarina:SendPacket(packet)
-		if packet.header == 0x00DE then -- castspell header
+		if self.R.using then
+			if self.menu.skills.R.stopkill and self.target ~= nil and self.target.health < self:MaxDmg(self.target) then
+				return
+			else
+				packet:Block()
+			end
+		elseif packet.header == 0x00DE then -- castspell header
 			packet.pos = 2
 			if packet:DecodeF() == myHero.networkID then
 				packet.pos = 26
@@ -490,7 +582,7 @@ class 'Katarina'
 				if spellid == 3 then
 					self.R.using = true
 					self.R.last  = os.clock()
-					print('started using R')
+					self:OtherMovements(false)
 				end
 			end
 		end
@@ -528,14 +620,20 @@ class 'Katarina'
 		if unit.isMe and buff.name == "katarinarsound" then
 			self.R.using = false
 			self.R.last  = 0
-			print('Ended Using R')
+			self:OtherMovements(true)
 		end
 	end
 
 	function Katarina:Spells(unit, spell)
-		if unit.isMe and spell.name == 'KatarinaQ' then
-			self.Q.throwing = true
-			self.Q.last     = os.clock()
+		if unit.isMe then
+			if spell.name == 'KatarinaQ' then
+				self.Q.throwing = true
+				self.Q.last     = os.clock()
+			elseif  self.menu.skills.E.humanizer and spell.name == 'KatarinaE' then
+				self.E.last   = os.clock()
+				self.E.delay  = self:random(0, self.menu.skills.E.maxdelay, 2)
+				self.E.canuse = false
+			end
 		end
 	end
 
@@ -677,7 +775,10 @@ class 'Spells'
 
 
 --|> Self Initiation
-Katarina = Katarina()
+function OnLoad()
+	--|> Superx Said Load OnLoad so Load OnLoad
+	Katarina = Katarina()
+end
 
 --|> Lewl Lewl Lewl Lewlite
 LoadProtectedScript('VjUzEzdFTURpN0NFYN50TGhvRUxAbTNLRXlNeER2ZUVMRm1zSyB5TXlMMuXFU0DtM0lFeU19RXJlRRMHbTdHRXlNKi0XACgFLgdWKDF5THlGcmRFTEBuM0tFe01xSnJlRcpALTONBTlNf8cyZQVNQG0uykV4CXhGcuSETECtMstFpE35RO/lRUzdLbNLWnnNeUJyZUVIR20zSyQKPhw0BmVBSUBtMycqGCl5Qn9lRUwCDEAuc00JHCUdASBMRG4zS0UbOXlGcmVFTUBtM0tFeU15RnJlRUxAbTNLRXlNeUdyZUVNQG0zS0V5TXlGcmVFTEBtM0s=E58480610F088EB431C5643BA55EEA35')
