@@ -193,6 +193,12 @@ class 'Katarina'
 				self.Q.throwing = false
 			end
 		end
+		if self.R.using then
+			if (os.clock() - self.R.last) > 2.5 then
+				self.R.using = false
+				self.R.last  = 0
+			end
+		end
 		if not self.E.canuse then
 			if (os.clock() - self.E.last) > self.E.delay then
 				self.E.canuse = true
@@ -414,7 +420,7 @@ class 'Katarina'
 			ExtraDmg = ExtraDmg + self:QBuffDmg(unit)
 		end
 		if self.ignite ~= nil and myHero:CanUseSpell(self.ignite) == READY then
-			ExtraDmg = ExtraDmg + getDmg('IGNITE', enemy, myHero)
+			ExtraDmg = ExtraDmg + getDmg('IGNITE', unit, myHero)
 		end
 		return DmgTable.Q + DmgTable.W + DmgTable.E + ExtraDmg
 	end
@@ -582,7 +588,6 @@ class 'Katarina'
 				if spellid == 3 then
 					self.R.using = true
 					self.R.last  = os.clock()
-					self:OtherMovements(false)
 				end
 			end
 		end
@@ -620,7 +625,6 @@ class 'Katarina'
 		if unit.isMe and buff.name == "katarinarsound" then
 			self.R.using = false
 			self.R.last  = 0
-			self:OtherMovements(true)
 		end
 	end
 
