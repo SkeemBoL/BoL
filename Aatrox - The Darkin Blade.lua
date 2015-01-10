@@ -558,9 +558,9 @@ function Checks()
 	Target = TargetSelector.target
 	
 	-- Finds Ignite --
-	if myHero:GetSpellData(SUMMONER_1).name:find("SummonerDot") then
+	if myHero:GetSpellData(SUMMONER_1).name:find("summonerdot") then
 		ignite = SUMMONER_1
-	elseif myHero:GetSpellData(SUMMONER_2).name:find("SummonerDot") then
+	elseif myHero:GetSpellData(SUMMONER_2).name:find("summonerdot") then
 		ignite = SUMMONER_2
 	end
 	
