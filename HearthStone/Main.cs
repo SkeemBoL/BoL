@@ -15,7 +15,7 @@ namespace HSAnthrax
 
         public static void Init()
         {
-            NintendoBot.Bot.Init();
+            NintendoBot.MenuHandler.Init();
         }
     }
 }
