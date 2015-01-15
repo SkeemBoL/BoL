@@ -19,14 +19,7 @@ namespace NintendoBot
         {
             DateTime currTime = DateTime.Now;
             TimeSpan timeSince = currTime - delayStart;
-            if (timeSince.TotalMilliseconds < delayLenght)
-            {
-                wait = true;
-            }
-            else
-            {
-                wait = false;
-            }
+            wait = timeSince.TotalMilliseconds < delayLenght;
         }
 
         // Find Game
