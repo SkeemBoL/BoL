@@ -61,7 +61,7 @@ class 'Katarina'
 		--|> Callback Binds
 		AddTickCallback(function() self:Tick() end)
 		AddDrawCallback(function() self:Draw() end)
-		--AddWndmsgCallback(function (msg, key) self:WndMsg(msg, key)	end)
+		AddMsgCallback(function (msg, key) self:WndMsg(msg, key) end)
 		AddProcessSpellCallback(function(unit, spell) self:Spells(unit, spell)	end)
 		if VIP_USER then
 			AddSendPacketCallback(function(packet) self:SendPacket(packet) end)
