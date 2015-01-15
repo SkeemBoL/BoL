@@ -4,7 +4,8 @@ namespace NintendoBot
 {
         public class MenuHandler : MonoBehaviour
         {
-            private bool starting = false;
+            private bool starting  = false;
+            private bool GameStarted = false;
             public static void Init()
             {
                 SceneMgr.Get().gameObject.AddComponent<MenuHandler>();
@@ -13,7 +14,6 @@ namespace NintendoBot
             {
                 Object.DontDestroyOnLoad((Object)this);
             }
-
             private void Update()
             {
                 Game.DelayUpdate();
@@ -21,10 +21,16 @@ namespace NintendoBot
                 {
                     SceneMgr.Mode GameMode = SceneMgr.Get().GetMode();
                     ManageModes(GameMode);
-                }else
+                }
+                else
                 {
                     Graphics.AddInfoMsg("Waiting for Delay");
                 }
+                Graphics.DrawText("My Health: " + GameState.Get().GetCurrentPlayer().GetHealth().ToString(), 15, 100, 100, UnityEngine.Color.red);
+            }
+            private void OnGUI()
+            {
+                
             }
             private void ManageModes(SceneMgr.Mode Mode)
             {
@@ -56,12 +62,17 @@ namespace NintendoBot
                         {
                             Game.Delay(2000);
                             Graphics.AddInfoMsg("Starting Game");
-                            Game.FindGame(PegasusShared.GameType.GT_VS_AI, (int)MissionId.PRACTICE_EXPERT_MAGE, DeckPickerTrayDisplay.Get().GetSelectedDeckID());
+                            Game.FindGame(PegasusShared.GameType.GT_VS_AI, (int)MissionId.NAXX_ANUBREKHAN, DeckPickerTrayDisplay.Get().GetSelectedDeckID());
                             starting = true;
                         }
                         break;
                     case SceneMgr.Mode.GAMEPLAY:
-                        Graphics.AddInfoMsg("Starting GameHandler");
+                        if (!GameStarted)
+                        {
+                            Graphics.AddInfoMsg("Starting GameHandler");
+                            GameStarted = true;
+                            NintendoBot.GameHandler.Init();
+                        }
 
                         break;
                     default:
