@@ -26,7 +26,6 @@ namespace NintendoBot
                 {
                     Graphics.AddInfoMsg("Waiting for Delay");
                 }
-                Graphics.DrawText("My Health: " + GameState.Get().GetCurrentPlayer().GetHealth().ToString(), 15, 100, 100, UnityEngine.Color.red);
             }
             private void OnGUI()
             {
