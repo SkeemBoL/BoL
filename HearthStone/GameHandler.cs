@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace NintendoBot
 {
@@ -19,11 +20,10 @@ namespace NintendoBot
         {
             Graphics.DrawText("Current Turn: " + GameState.Get().GetTurn(), 15, 100, 70, UnityEngine.Color.red);
             Graphics.DrawText("Cards In Hand:", 15, 100, 90, UnityEngine.Color.red);
-            int i = 0;
-            foreach (Card card in CardsInHand)
+            for (var i = 0; i < CardsInHand.Count; i++)
             {
-                i = i + 1;
-                Graphics.DrawText(card.GetEntity().GetName(), 12, 100, (100 + (i * 20)), UnityEngine.Color.green);
+                Card c = CardsInHand[i];
+                Graphics.DrawText(c.GetEntity().GetName(), 12, 100, (100 + (i * 20)), UnityEngine.Color.green);
             }
             Graphics.DrawText("My Name: "      + GameState.Get().GetCurrentPlayer().GetName(), 15, 100, 700, UnityEngine.Color.red);
             Graphics.DrawText("My Health: "    + GameState.Get().GetCurrentPlayer().GetRealTimeRemainingHP(), 15, 100, 720, UnityEngine.Color.red);

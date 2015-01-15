@@ -2,7 +2,7 @@
 
 namespace NintendoBot
 {
-    class Game
+    public class Game
     {   
         // Delay Stufff
         private static DateTime delayStart = DateTime.Now;

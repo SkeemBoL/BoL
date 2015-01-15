@@ -2,7 +2,7 @@
 
 namespace NintendoBot
 {
-    class Graphics
+    public class Graphics
     {
         public static void DrawText(string sText, int iSize, int iX, int iY, UnityEngine.Color color)
         {
