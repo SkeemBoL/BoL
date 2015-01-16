@@ -22,14 +22,6 @@ namespace NintendoBot
                     SceneMgr.Mode GameMode = SceneMgr.Get().GetMode();
                     ManageModes(GameMode);
                 }
-                else
-                {
-                    Graphics.AddInfoMsg("Waiting for Delay");
-                }
-            }
-            private void OnGUI()
-            {
-                
             }
             private void ManageModes(SceneMgr.Mode Mode)
             {
@@ -61,7 +53,7 @@ namespace NintendoBot
                         {
                             Game.Delay(2000);
                             Graphics.AddInfoMsg("Starting Game");
-                            Game.FindGame(PegasusShared.GameType.GT_VS_AI, (int)MissionId.NAXX_ANUBREKHAN, DeckPickerTrayDisplay.Get().GetSelectedDeckID());
+                            Game.FindGame(PegasusShared.GameType.GT_VS_AI, (int)MissionId.PRACTICE_EXPERT_PRIEST, DeckPickerTrayDisplay.Get().GetSelectedDeckID());
                             starting = true;
                         }
                         break;
