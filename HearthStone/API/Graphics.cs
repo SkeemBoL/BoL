@@ -1,6 +1,4 @@
-﻿using UnityEngine;
-
-namespace API
+﻿namespace API
 {
     class Graphics
     {
