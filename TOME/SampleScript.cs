@@ -1,9 +1,5 @@
-﻿using System.Linq;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
-using Common.Game.Actors;
-using Common.Game.Attributes;
-using Common.Game.Data;
 
 namespace NintendoTome
 {
