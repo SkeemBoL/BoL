@@ -58,16 +58,20 @@ class 'Katarina'
 		self.jungleMinions  = minionManager(MINION_JUNGLE,  self.spells.E:Range(), myHero, MINION_SORT_MAXHEALTH_DEC)
 		self.otherMinions   = minionManager(MINION_OTHER,   self.spells.E:Range(), myHero, MINION_SORT_MAXHEALTH_DEC)
 
+		--|> Override Globals Credits to Aroc :3
+		_G.myHero.SaveMove = _G.myHero.MoveTo
+		_G.myHero.SaveAttack = _G.myHero.Attack
+		_G.myHero.MoveTo = function(...) if not self.R.using then _G.myHero.SaveMove(...) end end
+		_G.myHero.Attack = function(...) if not self.R.using then _G.myHero.SaveAttack(...) end end
+
 		--|> Callback Binds
 		AddTickCallback(function() self:Tick() end)
 		AddDrawCallback(function() self:Draw() end)
 		AddMsgCallback(function (msg, key) self:WndMsg(msg, key) end)
 		AddProcessSpellCallback(function(unit, spell) self:Spells(unit, spell)	end)
-		if VIP_USER then
-			AddSendPacketCallback(function(packet) self:SendPacket(packet) end)
-			AdvancedCallback:bind('GainBuff', function (unit, buff) self:GainBuff(unit, buff) end)
-			AdvancedCallback:bind('LoseBuff', function (unit, buff) self:LoseBuff(unit, buff) end)
-		end
+		AddApplyBuffCallback(function(unit, source, buff) self:ApplyBuff(unit, source, buff) end)
+		AddRemoveBuffCallback(function(unit, buff) self:RemoveBuff(unit, buff) end)
+		AddCastSpellCallback(function(iSpell, startPos, endPos, targetUnit) self:OnCastSpell(iSpell,startPos,endPos,targetUnit) end)
 		AddCreateObjCallback(function(obj) self:ObjCreate(obj) end)
 		AddDeleteObjCallback(function(obj) self:ObjDelete(obj) end)
 
@@ -302,7 +306,7 @@ class 'Katarina'
 		if self.menu.skills.W.harassW then
 			self.spells.W:Cast(target)
 		end
-		if not self.spells.Q:Ready() and self.menu.skills.harassE then
+		if not self.spells.Q:Ready() and self.menu.skills.E.harassE then
 			if self.menu.harass.procQ then
 				if not self.Q.throwing then
 					self.spells.E:Cast(target)
@@ -402,6 +406,13 @@ class 'Katarina'
 					end
 				end
 			end
+		end
+	end
+
+	function Katarina:MoveTo(unit, x, y)
+		if not self.using then
+			print('name: '..unit.name..' x: '..x..' y: '..y)
+			self.oldMove(unit, x, y)
 		end
 	end
 
@@ -573,23 +584,11 @@ class 'Katarina'
 		end
 	end
 
-	function Katarina:SendPacket(packet)
-		if self.R.using then
-			if self.menu.skills.R.stopkill and self.target ~= nil and self.target.health < self:MaxDmg(self.target) then
-				return
-			else
-				packet:Block()
-			end
-		elseif packet.header == 0x00DE then -- castspell header
-			packet.pos = 2
-			if packet:DecodeF() == myHero.networkID then
-				packet.pos = 26
-				local spellid = packet:Decode1()
-				if spellid == 3 then
-					self.R.using = true
-					self.R.last  = os.clock()
-				end
-			end
+	function Katarina:OnCastSpell(iSpell,startPos,endPos,targetUnit)
+		if iSpell == 3 then
+			print('started using R')
+			self.R.using = true
+			self.R.last  = os.clock()
 		end
 	end
 
@@ -609,20 +608,21 @@ class 'Katarina'
 		end
 	end
 
-	function Katarina:GainBuff(unit, buff)
-		if buff.name == 'katarinaqmark' then
-			self.targetsWithQ[unit.networkID] = true
+	function Katarina:ApplyBuff(unit, source,  buff)
+		if unit == myHero and buff.name == 'katarinaqmark' then
+			self.targetsWithQ[source.networkID] = true
 			if self.Q.throwing then
 				self.Q.throwing = false
 			end
 		end
 	end
 
-	function Katarina:LoseBuff(unit, buff)
+	function Katarina:RemoveBuff(unit, buff)
 		if buff.name == 'katarinaqmark' then
 			self.targetsWithQ[unit.networkID] = nil
 		end
 		if unit.isMe and buff.name == "katarinarsound" then
+			print('Ended using R')
 			self.R.using = false
 			self.R.last  = 0
 		end
@@ -783,7 +783,3 @@ function OnLoad()
 	--|> Superx Said Load OnLoad so Load OnLoad
 	Katarina = Katarina()
 end
-
---|> Lewl Lewl Lewl Lewlite
-LoadProtectedScript('VjUzEzdFTURpN0NFYN50TGhvRUxAbTNLRXlNeER2ZUVMRm1zSyB5TXlMMuXFU0DtM0lFeU19RXJlRRMHbTdHRXlNKi0XACgFLgdWKDF5THlGcmRFTEBuM0tFe01xSnJlRcpALTONBTlNf8cyZQVNQG0uykV4CXhGcuSETECtMstFpE35RO/lRUzdLbNLWnnNeUJyZUVIR20zSyQKPhw0BmVBSUBtMycqGCl5Qn9lRUwCDEAuc00JHCUdASBMRG4zS0UbOXlGcmVFTUBtM0tFeU15RnJlRUxAbTNLRXlNeUdyZUVNQG0zS0V5TXlGcmVFTEBtM0s=E58480610F088EB431C5643BA55EEA35')
-SkeemInject("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", _ENV)
