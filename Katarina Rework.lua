@@ -1,5 +1,7 @@
 if myHero.charName ~= 'Katarina' then return end
 
+local KatarinaVersion = 3.02
+
 --|> Cuz superx is the only lua bender
 require 'SxOrbWalk'
 
@@ -76,7 +78,7 @@ class 'Katarina'
 		AddDeleteObjCallback(function(obj) self:ObjDelete(obj) end)
 
 		--|> Prints Loaded
-		print("<font color=\"#FF0000\">[Nintendo Katarina]:</font> <font color=\"#FFFFFF\">Loaded Version 3.02</font>")
+		print("<font color=\"#FF0000\">[Nintendo Katarina]:</font> <font color=\"#FFFFFF\">Loaded Version: "..KatarinaVersion.."</font>")
 	end
 
 
@@ -409,13 +411,6 @@ class 'Katarina'
 		end
 	end
 
-	function Katarina:MoveTo(unit, x, y)
-		if not self.using then
-			print('name: '..unit.name..' x: '..x..' y: '..y)
-			self.oldMove(unit, x, y)
-		end
-	end
-
 	function Katarina:QBuffDmg(unit)
 		local p = {dmg = {15,  30, 45,  60,   75},  apscaling = .15} -- QPassive Dmg
 		local spellDmg  = p.dmg[myHero:GetSpellData(_Q).level] or 0
@@ -586,7 +581,6 @@ class 'Katarina'
 
 	function Katarina:OnCastSpell(iSpell,startPos,endPos,targetUnit)
 		if iSpell == 3 then
-			print('started using R')
 			self.R.using = true
 			self.R.last  = os.clock()
 		end
@@ -622,7 +616,6 @@ class 'Katarina'
 			self.targetsWithQ[unit.networkID] = nil
 		end
 		if unit.isMe and buff.name == "katarinarsound" then
-			print('Ended using R')
 			self.R.using = false
 			self.R.last  = 0
 		end
@@ -777,9 +770,47 @@ class 'Spells'
 	end
 
 
+--|> Auto Updater
+class 'Update'
+	function Update:__init(version)
+		--|> Script info
+		self.version     = version
+		self.scriptLink  = "https://raw.githubusercontent.com/SkeemBoL/BoL/master/Katarina%20Rework.lua"
+		self.versionLink = "https://raw.githubusercontent.com/SkeemBoL/BoL/master/Katarina%20Rework.version"
+		self.path        = SCRIPT_PATH .. _ENV.FILE_NAME
+
+		--|> Variables
+		self.needUpdate  = false
+		self.ranUpdater  = false
+
+		--|> Callbacks
+		AddTickCallback(function () self:Tick() end)
+	end
+
+	function Update:Tick()
+		if not self.ranUpdater then
+			GetAsyncWebResult("raw.github.com" , self.versionLink, function(Data)
+ 	           local onlineVersion = tonumber(Data)
+ 	           if onlineVersion and onlineVersion > KatarinaVersion then
+ 	           		print("<font color=\"#FF0000\">[Nintendo Katarina]:</font> <font color=\"#FFFFFF\">Found Update: </font> <font color=\"#FF0000\">"..KatarinaVersion.." > "..onlineVersion.." Updating... Don't F9!!</font>")
+ 	           		self.needUpdate = true
+ 	           end
+ 	        end)
+			self.ranUpdater = true
+		end
+		if self.needUpdate then
+			DownloadFile(self.scriptLink, self.path, function()
+                if FileExist(self.path) then
+                    print("<font color=\"#FF0000\">[Nintendo Katarina]:</font> <font color=\"#FFFFFF\">updated! Double F9 to use new version!</font>")
+                end
+            end)
+            self.needUpdate = false
+		end
+	end
 
 --|> Self Initiation
 function OnLoad()
 	--|> Superx Said Load OnLoad so Load OnLoad
+	Update(KatarinaVersion)
 	Katarina = Katarina()
 end
