@@ -1,6 +1,6 @@
 if myHero.charName ~= 'Katarina' then return end
 
-local KatarinaVersion = 3.02
+local KatarinaVersion = 3.10
 
 --|> Cuz superx is the only lua bender
 require 'SxOrbWalk'
@@ -150,6 +150,13 @@ class 'Katarina'
 			self.menu:addParam('lasthitKey',  'Last Hit Key',   SCRIPT_PARAM_ONKEYDOWN, false, GetKey('A'))
 			self.menu:addParam('wardjumpKey', 'Ward Jump Key',  SCRIPT_PARAM_ONKEYDOWN, false, GetKey('G'))
 
+			--|> Perma Shows
+			self.menu:permaShow('comboKey')
+			self.menu:permaShow('harassKey')
+			self.menu:permaShow('clearKey')
+			self.menu:permaShow('wardjumpKey')
+			self.menu.farming:permaShow('farmQToggle')
+
 			--|> Target Selector
 			self.ts = TargetSelector(TARGET_LESS_CAST, self.spells.E.range, DAMAGE_MAGIC, true)
 			self.ts.name = 'Katarina'
@@ -191,7 +198,7 @@ class 'Katarina'
 				self:WardJump(WardPos.x, WardPos.z)
 			end
 		end
-		if not self.menu.comboKey and not self.menu.harassKey then 
+		if not self.menu.comboKey then 
 			self:Farm()
 		end
 		if self.Q.throwing then
@@ -326,7 +333,8 @@ class 'Katarina'
 				if ValidTarget(minion) and minion.health <= self.spells.W:Damage(minion) then
 					self.spells.W:Cast(minion)
 				end
-			elseif self.menu.farming.farmQToggle or (self.menu.farming.farmQLast and self.menu.lasthitKey) then
+			end
+			if self.menu.farming.farmQToggle or (self.menu.farming.farmQLast and self.menu.lasthitKey) then
 				if ValidTarget(minion) and minion.health <= self.spells.Q:Damage(minion) then
 					self.spells.Q:Cast(minion)
 				end
@@ -395,7 +403,7 @@ class 'Katarina'
 					self.spells.Q:Cast(enemy)
 					self.spells.W:Cast(enemy)
 				end
-			elseif ValidTarget(enemy, self.spells.Q:Range() + 590) and (GetDistance(enemy) > self.spells.Q:Range()) then
+			elseif  self.menu.killsteal.wards and ValidTarget(enemy, self.spells.Q:Range() + 590) and (GetDistance(enemy) > self.spells.Q:Range()) then
 				local ExtraDmg = 0
 				if self.ignite ~= nil and myHero:CanUseSpell(self.ignite) == READY then
 					ExtraDmg = ExtraDmg + getDmg('IGNITE', enemy, myHero)
@@ -412,11 +420,7 @@ class 'Katarina'
 	end
 
 	function Katarina:QBuffDmg(unit)
-		local p = {dmg = {15,  30, 45,  60,   75},  apscaling = .15} -- QPassive Dmg
-		local spellDmg  = p.dmg[myHero:GetSpellData(_Q).level] or 0
-		local apscaling = p.apscaling or 0
-		local totaldmg  = spellDmg + (apscaling * myHero.ap)
-		return unit and myHero:CalcMagicDamage(unit, totaldmg)
+		return getDmg('Q', unit, myHero, 2) or 0
 	end
 
 	function Katarina:MaxDmg(unit)
