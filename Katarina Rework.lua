@@ -1,6 +1,6 @@
 if myHero.charName ~= 'Katarina' then return end
 
-local KatarinaVersion = 3.10
+local KatarinaVersion = 3.15
 
 --|> Cuz superx is the only lua bender
 require 'SxOrbWalk'
@@ -40,8 +40,6 @@ class 'Katarina'
 		--|> Target tracking
 		self.target = nil
 
-		--|> EnemyText Table
-		self.enemyText = {}
 		--|> Items Table
 		self:LoadItemsTable()
 
@@ -142,6 +140,7 @@ class 'Katarina'
 			--|> Other Settings
 			self.menu:addSubMenu('-~=[Other Settings]=~-', 'other')
 				self.menu.other:addParam('maxjump', 'Always Ward Jump at Max Range', SCRIPT_PARAM_ONOFF, true)
+				self.menu.other:addParam('drawText', 'Draw Damage Text on Enemy', SCRIPT_PARAM_ONOFF, true)
 
 			--|> Main Keys
 			self.menu:addParam('comboKey',    'Full Combo Key', SCRIPT_PARAM_ONKEYDOWN, false, GetKey('X'))
@@ -253,34 +252,45 @@ class 'Katarina'
 		if self.menu.skills.E.drawE and self.spells.E:Ready() then
 			self:DrawCircle(myHero.x, myHero.y, myHero.z, self.spells.E:Range(), self.spells.E:Color())
 		end
-		for i, enemy in ipairs(GetEnemyHeroes()) do
-			if ValidTarget(enemy) then
-				local DmgTable = { Q = self.spells.Q:Damage(enemy), W = self.spells.W:Damage(enemy), E = self.spells.E:Damage(enemy)}
-				local ExtraDmg = 0
-				ExtraDmg = ExtraDmg + self:QBuffDmg(enemy)
-				if self.ignite ~= nil and myHero:CanUseSpell(self.ignite) == READY then
-					ExtraDmg = ExtraDmg + getDmg('IGNITE', enemy, myHero)
-				end
-				if DmgTable.W > enemy.health + ExtraDmg then
-					self.enemyText[enemy.networkID] = 'W Kill'
-				elseif DmgTable.Q > enemy.health + ExtraDmg then
-					self.enemyText[enemy.networkID] = 'Q Kill'
-				elseif DmgTable.E > enemy.health + ExtraDmg then
-					self.enemyText[enemy.networkID] = 'E Kill'
-				elseif DmgTable.Q + DmgTable.W > enemy.health + ExtraDmg then
-					self.enemyText[enemy.networkID] = 'W + Q Kill'
-				elseif DmgTable.E + DmgTable.W > enemy.health + ExtraDmg then
-					self.enemyText[enemy.networkID] = 'E + W Kill'
-				elseif DmgTable.Q + DmgTable.W + DmgTable.E > enemy.health + ExtraDmg then
-					self.enemyText[enemy.networkID] = 'Q + W + E Kill'
-				else
-					self.enemyText[enemy.networkID] = 'Cant Kill Yet'
-				end
-				local pos = WorldToScreen(D3DXVECTOR3(enemy.x, enemy.y, enemy.z))
-				if self.enemyText[enemy.networkID] ~= nil then
-					DrawText(self.enemyText[enemy.networkID], 12, pos.x, pos.y, ARGB(255,255,204,0))
+		if self.menu.other.drawText then
+			for i, enemy in ipairs(GetEnemyHeroes()) do
+				if ValidTarget(enemy) then
+					local pos = WorldToScreen(D3DXVECTOR3(enemy.x, enemy.y, enemy.z))
+					local enemyText, color =  self:GetDrawText(enemy)
+					if enemyText ~= nil then
+						DrawText(enemyText, 15, pos.x, pos.y, color)
+					end
 				end
 			end
+		end
+	end
+
+	function Katarina:GetDrawText(unit)
+		local DmgTable = { Q = self.spells.Q:Damage(unit), W = self.spells.W:Damage(unit), E = self.spells.E:Damage(unit), R = self.spells.R:Damage(unit)}
+		local ExtraDmg = 0
+		if self.ignite ~= nil and myHero:CanUseSpell(self.ignite) == READY then
+			ExtraDmg = ExtraDmg + getDmg('IGNITE', unit, myHero)
+		end
+		if DmgTable.W > unit.health then
+			return 'W', RGBA(139, 0, 0, 255)
+		elseif DmgTable.Q > unit.health then
+			return 'Q', RGBA(139, 0, 0, 255)
+		elseif DmgTable.E > unit.health then
+			return 'E', Graphics.RGBA(139, 0, 0, 255)
+		elseif DmgTable.Q + DmgTable.W > unit.health then
+			return 'W + Q', RGBA(139, 0, 0, 255)
+		elseif DmgTable.E + DmgTable.W > unit.health then
+			return 'E + W', Graphics.RGBA(139, 0, 0, 255)
+		elseif DmgTable.Q + DmgTable.W + DmgTable.E > unit.health then
+			return 'Q + W + E', RGBA(255, 0, 0, 255)
+		elseif DmgTable.Q + self:QBuffDmg(unit) + DmgTable.W + DmgTable.E > unit.health then
+			return '(Q + Passive) + W +E', RGBA(255, 0, 0, 255)
+		elseif ExtraDmg > 0 and ExtraDmg + DmgTable.Q + self:QBuffDmg(unit) + DmgTable.W + DmgTable.E > unit.health then
+			return '(Q + Passive) + W + E + Ignite', RGBA(255, 0, 0, 255)
+		elseif self.spells.R:Ready2() and DmgTable.Q + DmgTable.W + DmgTable.E + (DmgTable.R *10) > unit.health then
+			return 'Q + W + E + Ult ('.. string.format('%4.1f', (unit.health -  DmgTable.Q + DmgTable.W + DmgTable.E) * (1/(DmgTable.R*10))) .. ' Secs)', RGBA(255, 69, 0, 255)
+		else
+			return 'Cant Kill Yet', RGBA(0, 255, 0, 255)
 		end
 	end
 
@@ -762,6 +772,10 @@ class 'Spells'
 
 	function Spells:Ready()
 		return myHero:CanUseSpell(self.slot) == READY
+	end
+
+	function Spells:Ready2()
+		return self:Data().level > 0 and self:Data().currentCd == 0
 	end
 
 	function Spells:Slot()
