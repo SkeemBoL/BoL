@@ -1,6 +1,6 @@
 if myHero.charName ~= 'Katarina' then return end
 
-local KatarinaVersion = 3.15
+local KatarinaVersion = 3.20
 
 --|> Cuz superx is the only lua bender
 require 'SxOrbWalk'
@@ -27,6 +27,9 @@ class 'Katarina'
 
 		--|> Tracks Ward Jumpings
 		self.lastJump = 0
+
+		--|> Ward Names (bye bye Ids)
+		self.wards = {SightStone = 'itemghostward', SightWard = 'sightward', VisionWard = 'visionward', Trinket1 = 'trinkettotemlvl1', Trinket2 = 'trinkettotemlvl2', Trinket3 = 'trinkettotemlvl3', Trinket4 = 'trinkettotemlvl3b'}
 
 		--|> Starts Menu
 		self:Menu()
@@ -550,22 +553,7 @@ class 'Katarina'
 			end
 
 			if not Jumped and GetTickCount() >= self.lastJump then
-				local Slot = nil
-				if (myHero:CanUseSpell(ITEM_7) == READY and myHero:getItem(ITEM_7).id == 3340) or (myHero:CanUseSpell(ITEM_7) == READY and myHero:getItem(ITEM_7).id == 3350) or (myHero:CanUseSpell(ITEM_7) == READY and myHero:getItem(ITEM_7).id == 3361) or (myHero:CanUseSpell(ITEM_7) == READY and myHero:getItem(ITEM_7).id == 3362) then
-					Slot = ITEM_7
-				elseif GetInventorySlotItem(3154) ~= nil and myHero:CanUseSpell(GetInventorySlotItem(3154)) then
-					Slot = GetInventorySlotItem(3154)
-				elseif GetInventorySlotItem(3160) ~= nil and myHero:CanUseSpell(GetInventorySlotItem(3160)) then
-					Slot = GetInventorySlotItem(3160)
-				elseif GetInventorySlotItem(2045) ~= nil and myHero:CanUseSpell(GetInventorySlotItem(2045)) then
-					Slot = GetInventorySlotItem(2045)
-				elseif GetInventorySlotItem(2049) ~= nil and myHero:CanUseSpell(GetInventorySlotItem(2049)) then
-					Slot = GetInventorySlotItem(2049)
-				elseif GetInventorySlotItem(2044) ~= nil and myHero:CanUseSpell(GetInventorySlotItem(2044)) then
-					Slot = GetInventorySlotItem(2044)
-				elseif GetInventorySlotItem(2043) ~= nil and myHero:CanUseSpell(GetInventorySlotItem(2043)) then
-					Slot = GetInventorySlotItem(2043)
-				end			
+				local Slot = self:GetWardSlot()
 				if Slot ~= nil then
 					CastSpell(Slot, x, y)
 					Jumped = true
@@ -573,6 +561,34 @@ class 'Katarina'
 				end
 			end
 		end
+	end
+	function Katarina:GetWardSlot()
+		-- Gets Slot of Available Wards --
+		local function getReadySlot(itemName)
+			for slot = 6, 12 do
+				if name == itemName and myHero:CanUseSpell(slot) then
+					return slot
+				end
+			end
+			return nil
+		end
+		-- Ward Priorities --
+		if getReadySlot(self.wards.SightStone) ~= nil then
+			return getReadySlot(self.wards.SightStone)
+		elseif getReadySlot(self.wards.Trinket1) ~= nil then
+			return getReadySlot(self.wards.Trinket1)
+		elseif getReadySlot(self.wards.Trinket2) ~= nil then
+			return getReadySlot(self.wards.Trinket2)
+		elseif getReadySlot(self.wards.Trinket3) ~= nil then
+			return getReadySlot(self.wards.Trinket3)
+		elseif getReadySlot(self.wards.Trinket4) ~= nil then
+			return getReadySlot(self.wards.Trinket4)
+		elseif getReadySlot(self.wards.SightWard) ~= nil then
+			return getReadySlot(self.wards.SightWard)
+		elseif getReadySlot(self.wards.VisionWard) ~= nil then
+			return getReadySlot(self.wards.VisionWard)
+		end
+		return nil
 	end
 
 	function Katarina:AutoIgnite()
