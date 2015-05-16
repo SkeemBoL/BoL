@@ -566,7 +566,7 @@ class 'Katarina'
 		-- Gets Slot of Available Wards --
 		local function getReadySlot(itemName)
 			for slot = 6, 12 do
-				if name == itemName and myHero:CanUseSpell(slot) then
+				if myHero:GetSpellData(slot).name == itemName and myHero:CanUseSpell(slot) then
 					return slot
 				end
 			end
