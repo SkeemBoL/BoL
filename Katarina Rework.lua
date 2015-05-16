@@ -1,6 +1,6 @@
 if myHero.charName ~= 'Katarina' then return end
 
-local KatarinaVersion = 3.20
+local KatarinaVersion = 3.30
 
 --|> Cuz superx is the only lua bender
 require 'SxOrbWalk'
@@ -566,16 +566,14 @@ class 'Katarina'
 		-- Gets Slot of Available Wards --
 		local function getReadySlot(itemName)
 			for slot = 6, 12 do
-				if myHero:GetSpellData(slot).name == itemName and myHero:CanUseSpell(slot) then
+				if string.lower(myHero:GetSpellData(slot).name) == itemName and myHero:CanUseSpell(slot) then
 					return slot
 				end
 			end
 			return nil
 		end
 		-- Ward Priorities --
-		if getReadySlot(self.wards.SightStone) ~= nil then
-			return getReadySlot(self.wards.SightStone)
-		elseif getReadySlot(self.wards.Trinket1) ~= nil then
+		if getReadySlot(self.wards.Trinket1) ~= nil then
 			return getReadySlot(self.wards.Trinket1)
 		elseif getReadySlot(self.wards.Trinket2) ~= nil then
 			return getReadySlot(self.wards.Trinket2)
@@ -587,6 +585,8 @@ class 'Katarina'
 			return getReadySlot(self.wards.SightWard)
 		elseif getReadySlot(self.wards.VisionWard) ~= nil then
 			return getReadySlot(self.wards.VisionWard)
+		elseif getReadySlot(self.wards.SightStone) ~= nil then
+			return getReadySlot(self.wards.SightStone)
 		end
 		return nil
 	end
