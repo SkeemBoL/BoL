@@ -1,6 +1,6 @@
 if myHero.charName ~= 'Katarina' then return end
 
-local KatarinaVersion = 3.30
+local KatarinaVersion = 3.35
 
 --|> Cuz superx is the only lua bender
 require 'SxOrbWalk'
@@ -279,11 +279,11 @@ class 'Katarina'
 		elseif DmgTable.Q > unit.health then
 			return 'Q', RGBA(139, 0, 0, 255)
 		elseif DmgTable.E > unit.health then
-			return 'E', Graphics.RGBA(139, 0, 0, 255)
+			return 'E', RGBA(139, 0, 0, 255)
 		elseif DmgTable.Q + DmgTable.W > unit.health then
 			return 'W + Q', RGBA(139, 0, 0, 255)
 		elseif DmgTable.E + DmgTable.W > unit.health then
-			return 'E + W', Graphics.RGBA(139, 0, 0, 255)
+			return 'E + W', RGBA(139, 0, 0, 255)
 		elseif DmgTable.Q + DmgTable.W + DmgTable.E > unit.health then
 			return 'Q + W + E', RGBA(255, 0, 0, 255)
 		elseif DmgTable.Q + self:QBuffDmg(unit) + DmgTable.W + DmgTable.E > unit.health then
